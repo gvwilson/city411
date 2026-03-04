@@ -1,6 +1,7 @@
 """Data generation parameters."""
 
 from dataclasses import dataclass
+from datetime import date, timedelta
 import json
 from faker.config import AVAILABLE_LOCALES
 
@@ -22,6 +23,9 @@ class Parameters:
     num_persons: int = 20
     """Number of persons."""
 
+    mean_call_interval: timedelta = timedelta(days=30)
+    """Median mean time between call clusters across persons."""
+
     def __post_init__(self):
         """Validate fields."""
         pass
@@ -33,5 +37,7 @@ class Parameters:
 
 def _serialize_json(obj):
     """Custom JSON serializer."""
+    if isinstance(obj, timedelta):
+        return obj.total_seconds()
     assert isinstance(obj, date)
     return obj.isoformat()

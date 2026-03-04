@@ -1,7 +1,10 @@
 """Synthesize data."""
 
 import argparse
+import json
 import random
+import sys
+
 from faker import Faker
 
 from .parameters import Parameters
