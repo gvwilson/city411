@@ -1,0 +1,18 @@
+# Python files
+*.egg-info
+*.py[oc]
+.coverage
+.pytest_cache/
+.venv
+__marimo__/
+__pycache__/
+dist/
+
+# Editor backup files
+*~
+*.bak
+*.bkp
+*.swp
+
+# MacOS
+.DS_Store

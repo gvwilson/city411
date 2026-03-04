@@ -1,0 +1,38 @@
+[project]
+name = "city411"
+description = "Simulate city call center"
+keywords = ["open science", "synthetic data"]
+readme = "README.md"
+authors = [
+    {name = "Greg Wilson", email = "gvwilson@third-bit.com"}
+]
+license = {file = "LICENSE.md"}
+
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "faker>=40.1.2",
+]
+
+[project.urls]
+Repository = "https://github.com/gvwilson/city411"
+Documentation = "https://city411.readthedocs.io"
+
+[project.scripts]
+city411 = "city411.main:main"
+
+[dependency-groups]
+dev = [
+    "build>=1.4.0",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "twine>=6.2.0",
+    "ty>=0.0.14",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/city411"]
