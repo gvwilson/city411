@@ -2,8 +2,10 @@
 
 import argparse
 import random
+from faker import Faker
 
 from .parameters import Parameters
+from .person import Person
 
 
 def main():
@@ -15,6 +17,11 @@ def main():
         return 0
 
     params = _initialize(args)
+
+    fake = Faker(params.locale)
+    data = {
+        "persons": Person.make(params, fake)
+    }
 
     return 0
 

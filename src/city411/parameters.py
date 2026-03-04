@@ -19,6 +19,9 @@ class Parameters:
     locale: str = "en_CA"
     """Locale for generating people and locations."""
 
+    num_persons: int = 20
+    """Number of persons."""
+
     def __post_init__(self):
         """Validate fields."""
         pass
