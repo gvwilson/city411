@@ -1,18 +1,16 @@
 """Synthesize data."""
 
 import argparse
+import asimpy
 from datetime import timedelta
+from faker import Faker
 import json
+import polars as pl
 import random
 import sys
 
-import asimpy
-from faker import Faker
-import polars as pl
-
 from .parameters import Parameters
-from .person import Person
-from .person_process import PersonProcess
+from .person import Person, PersonProcess
 
 
 def main():
@@ -28,9 +26,12 @@ def main():
     persons = Person.make(params, fake)
     df = _simulate(params, persons)
 
-    for key, frame in df.items():
-        print(key)
-        print(frame)
+    if args.db:
+        _save_to_db(args.db, df)
+    else:
+        for key, frame in df.items():
+            print(key)
+            print(frame)
 
     return 0
 
@@ -48,24 +49,48 @@ def _to_dataframes(params, persons, results):
     """Convert simulation results to Polars dataframes."""
 
     def to_ts(seconds):
-        return params.start_date + timedelta(seconds=seconds)
+        return params.start_date + timedelta(seconds=int(seconds))
 
-    persons_df = pl.DataFrame([
-        {"ident": p.ident, "family": p.family, "personal": p.personal}
-        for p in persons
-    ])
+    persons_df = pl.DataFrame(
+        [
+            {"ident": p.ident, "family": p.family, "personal": p.personal}
+            for p in persons
+        ]
+    )
 
-    conversations_df = pl.DataFrame([
-        {"ident": c.ident, "person_id": c.person_id, "start_time": to_ts(c.start_time)}
-        for c in results["conversations"]
-    ])
+    conversations_df = pl.DataFrame(
+        [
+            {
+                "ident": c.ident,
+                "person_id": c.person_id,
+                "start_time": to_ts(c.start_time),
+            }
+            for c in results["conversations"]
+        ]
+    )
 
-    calls_df = pl.DataFrame([
-        {"ident": c.ident, "conversation_id": c.conversation_id, "person_id": c.person_id, "time": to_ts(c.time), "sequence": c.sequence}
-        for c in results["calls"]
-    ])
+    calls_df = pl.DataFrame(
+        [
+            {
+                "ident": c.ident,
+                "conversation_id": c.conversation_id,
+                "person_id": c.person_id,
+                "time": to_ts(c.time),
+                "sequence": c.sequence,
+            }
+            for c in results["calls"]
+        ]
+    )
 
     return {"persons": persons_df, "conversations": conversations_df, "calls": calls_df}
+
+
+def _save_to_db(path, data):
+    """Persist dataframes to a SQLite database, one table per dataframe."""
+
+    uri = f"sqlite:///{path}"
+    for name, df in data.items():
+        df.write_database(name, uri, if_table_exists="replace", engine="adbc")
 
 
 def _initialize(args):
@@ -94,6 +119,7 @@ def _parse_args():
     """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--db", default=None, help="SQLite database file")
     parser.add_argument(
         "--defaults", action="store_true", help="show default parameters"
     )

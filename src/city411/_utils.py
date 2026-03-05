@@ -1,5 +1,6 @@
 """Utilities."""
 
+
 def id_generator(stem, digits):
     """Generate unique IDs of the form 'stemDDDD'."""
     i = 1

@@ -32,16 +32,23 @@ class Parameters:
     mean_followup_interval: timedelta = timedelta(days=2)
     """Mean time between follow-up calls within a conversation."""
 
-    start_date: datetime = datetime(2024, 1, 1)
+    start_date: datetime = datetime(2025, 1, 1)
     """Start date of the simulation."""
 
-    end_date: datetime = datetime(2024, 12, 31)
+    end_date: datetime = datetime(2025, 12, 31)
     """End date of the simulation."""
 
     def __post_init__(self):
         """Validate fields."""
+        msgs = []
+        if self.locale not in AVAILABLE_LOCALES:
+            msgs.append(f"unknown locale '{self.locale}'")
         if self.end_date <= self.start_date:
-            raise ValueError(f"end_date {self.end_date} must be after start_date {self.start_date}")
+            msgs.append(
+                f"end_date {self.end_date} must be after start_date {self.start_date}"
+            )
+        if msgs:
+            raise ValueError("\n".join(msgs))
 
     def as_json(self, indent=JSON_INDENT):
         """Convert parameters to a JSON string."""
