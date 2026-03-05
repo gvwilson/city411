@@ -11,6 +11,7 @@ import sys
 
 from .parameters import Parameters
 from .person import Person, PersonProcess
+from .staff import Staff, StaffProcess
 
 
 def main():
@@ -24,7 +25,8 @@ def main():
     params = _initialize(args)
     fake = Faker(params.locale)
     persons = Person.make(params, fake)
-    df = _simulate(params, persons)
+    staff = Staff.make(params, fake)
+    df = _simulate(params, persons, staff)
 
     if args.db:
         _save_to_db(args.db, df)
@@ -36,35 +38,39 @@ def main():
     return 0
 
 
-def _simulate(params, persons):
+def _simulate(params, persons, staff):
     results = {"conversations": [], "calls": []}
     env = asimpy.Environment()
+    call_queue = asimpy.Queue(env)
+    escalation_queue = asimpy.Queue(env)
     for person in persons:
-        PersonProcess(env, person, params, results)
+        PersonProcess(env, person, params, results, call_queue)
+    for s in staff:
+        StaffProcess(env, s, params, call_queue, escalation_queue)
     env.run(until=(params.end_date - params.start_date).total_seconds())
-    return _to_dataframes(params, persons, results)
+    return _to_dataframes(params, persons, staff, results)
 
 
-def _to_dataframes(params, persons, results):
+def _to_dataframes(params, persons, staff, results):
     """Convert simulation results to Polars dataframes."""
 
     def to_ts(seconds):
         return params.start_date + timedelta(seconds=int(seconds))
 
     persons_df = pl.DataFrame(
+        [{"ident": p.ident, "family": p.family, "personal": p.personal} for p in persons]
+    )
+
+    staff_df = pl.DataFrame(
         [
-            {"ident": p.ident, "family": p.family, "personal": p.personal}
-            for p in persons
+            {"ident": s.ident, "family": s.family, "personal": s.personal, "role": s.role}
+            for s in staff
         ]
     )
 
     conversations_df = pl.DataFrame(
         [
-            {
-                "ident": c.ident,
-                "person_id": c.person_id,
-                "start_time": to_ts(c.start_time),
-            }
+            {"ident": c.ident, "person_id": c.person_id, "start_time": to_ts(c.start_time)}
             for c in results["conversations"]
         ]
     )
@@ -77,12 +83,24 @@ def _to_dataframes(params, persons, results):
                 "person_id": c.person_id,
                 "time": to_ts(c.time),
                 "sequence": c.sequence,
+                "staff_id": c.staff_id,
+                "wait_time": c.wait_time,
+                "handle_time": c.handle_time,
+                "escalated": c.escalated,
+                "escalation_wait_time": c.escalation_wait_time,
+                "escalation_handle_time": c.escalation_handle_time,
+                "supervisor_id": c.supervisor_id,
             }
             for c in results["calls"]
         ]
     )
 
-    return {"persons": persons_df, "conversations": conversations_df, "calls": calls_df}
+    return {
+        "persons": persons_df,
+        "staff": staff_df,
+        "conversations": conversations_df,
+        "calls": calls_df,
+    }
 
 
 def _save_to_db(path, data):

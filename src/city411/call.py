@@ -28,6 +28,30 @@ class Call:
     sequence: int = 0
     """Position of this call within its conversation (1-based)."""
 
+    staff_id: str = ""
+    """ID of the frontline staff member who handled this call."""
+
+    wait_time: float = 0.0
+    """Seconds between call arrival and frontline staff pickup."""
+
+    handle_time: float = 0.0
+    """Seconds frontline staff spent on this call."""
+
+    escalated: bool = False
+    """Whether this call was escalated to a supervisor."""
+
+    escalation_time: float = 0.0
+    """Simulation time when call was escalated (internal use)."""
+
+    escalation_wait_time: float = 0.0
+    """Seconds between escalation and supervisor pickup."""
+
+    escalation_handle_time: float = 0.0
+    """Seconds supervisor spent on this call."""
+
+    supervisor_id: str = ""
+    """ID of the supervisor who handled this call, if escalated."""
+
     def __post_init__(self):
         self.ident = next(_NEXT_CALL_ID)
 

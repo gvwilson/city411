@@ -63,10 +63,11 @@ class Person:
 class PersonProcess(Process):
     """Simulates one person's calls to the city over time."""
 
-    def init(self, person, params, results):
+    def init(self, person, params, results, call_queue):
         self.person = person
         self.params = params
         self.results = results
+        self.call_queue = call_queue
 
     async def run(self):
         p_resolve = 1.0 / self.params.mean_calls_per_conversation
@@ -97,6 +98,7 @@ class PersonProcess(Process):
                 )
                 conversation.calls.append(call)
                 self.results["calls"].append(call)
+                await self.call_queue.put(call)
 
                 if random.random() < p_resolve:
                     break

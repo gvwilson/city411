@@ -32,6 +32,21 @@ class Parameters:
     mean_followup_interval: timedelta = timedelta(days=2)
     """Mean time between follow-up calls within a conversation."""
 
+    num_frontline_staff: int = 5
+    """Number of frontline call-takers."""
+
+    num_supervisors: int = 2
+    """Number of supervisors available for escalation."""
+
+    mean_call_duration: timedelta = timedelta(minutes=10)
+    """Mean duration of a frontline call (lognormal median)."""
+
+    mean_escalation_duration: timedelta = timedelta(minutes=20)
+    """Mean duration of a supervisor-handled escalation (lognormal median)."""
+
+    p_escalation: float = 0.1
+    """Probability a call is escalated to a supervisor."""
+
     start_date: datetime = datetime(2025, 1, 1)
     """Start date of the simulation."""
 
